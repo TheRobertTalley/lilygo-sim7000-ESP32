@@ -1,0 +1,58 @@
+	<--- 
+	---> AT
+	<--- 
+	---> AT
+	<--- 
+	---> AT
+	<--- 
+	---> AT
+	<--- 
+	---> AT
+	<--- 
+	---> AT
+	<--- 
+	---> AT
+	<--- +CPIN: READY
+	---> AT
+	<--- AT
+	---> AT
+	<--- AT
+	---> ATE0
+	<--- ATE0
+	---> ATE0
+	<--- OK
+	---> AT+GMR
+	<--- Revision:1529B04SIM7000G
+
+OK
+
+	---> AT+CPMS="SM","SM","SM"
+	<--- +CPMS: 0,0,0,0,0,0
+FONA is OK
+Found 	---> AT+CFUN=1
+	<--- OK
+	---> AT+CGDCONT=1,"IP","vzwinternet"
+	<--- OK
+	---> AT+CBANDCFG="CAT-M",13
+	<--- OK
+	---> AT+CNETLIGHT=0
+	<--- OK
+        SDCard MOUNT FAIL
+Location: INVALID  Date/Time: 0/0/2000 00:00:00  
+
+Location: INVALID  Date/Time: 0/0/2000 00:00:00  
+
+Guru Meditation Error: Core  1 panic'ed (LoadProhibited). Exception was unhandled.
+Core 1 register dump:
+PC      : 0x400893d8  PS      : 0x00060130  A0      : 0x800d224d  A1      : 0x3ffb1e70  
+A2      : 0x3ffb1ea8  A3      : 0x00000000  A4      : 0x0000000a  A5      : 0x3ffb1f0c  
+A6      : 0x00000020  A7      : 0x00000005  A8      : 0x3ffb1eb4  A9      : 0x00000000  
+A10     : 0x3ffb1eb1  A11     : 0x3ffb1eb1  A12     : 0x0000000a  A13     : 0x0000ff00  
+A14     : 0x00ff0000  A15     : 0xff000000  SAR     : 0x00000010  EXCCAUSE: 0x0000001c  
+EXCVADDR: 0x00000000  LBEG    : 0x400889e4  LEND    : 0x40088a00  LCOUNT  : 0x00000000  
+
+ELF file SHA256: 0000000000000000
+
+Backtrace: 0x400893d8:0x3ffb1e70 0x400d224a:0x3ffb1e90 0x400d1542:0x3ffb1f30 0x400d19a0:0x3ffb1f50 0x400d1a23:0x3ffb1f70 0x400d1ef2:0x3ffb1f90 0x400d84c1:0x3ffb1fb0 0x4008b38e:0x3ffb1fd0
+
+Rebooting...
