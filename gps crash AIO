@@ -1,4 +1,4 @@
-#include <Adafruit_FONA.h> // https://github.com/botletics/SIM7000-LTE-Shield/tree/master/Code
+#include <Adafruit_FONA.h> // https://github.com/botletics/SIM7000-LTE-Shield/tree/master/Code its Tim WOO's
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 #include <FS.h>
@@ -14,7 +14,7 @@
 
 /************************* WiFi Access Point *********************************
 
-#define WLAN_SSID ""                    //#define WLAN_SSID "ATTnMN2XJA"       Guest Wifi 
+#define WLAN_SSID ""                    //#define WLAN_SSID "ATTn"       Guest Wifi 
 #define WLAN_PASS ""                    //#define WLAN_PASS "faec7anm4qsj" 
 
 /************************* Adafruit.io Setup *********************************/
@@ -74,12 +74,12 @@ uint8_t type;
 char replybuffer[255]; // this is a large buffer for replies
 char imei[16] = {0}; // MUST use a 16 character buffer for IMEI!
 
-#define SIMCOM_7000
+#define SIMCOM_7000                 //pins for a tcallsim7000x
 #define FONA_PWRKEY 5
 #define FONA_RST 4
 #define FONA_TX 26 // For GSM
 #define FONA_RX 27 
-#define TXPin 32 // For GPS module 
+#define TXPin 32 // For GPS module (NEO-6M)
 #define RXPin 33 
 #define SD_MISO     2
 #define SD_MOSI     15
