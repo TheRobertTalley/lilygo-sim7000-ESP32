@@ -1,3 +1,5 @@
+*/https://github.com/mudmin/AnotherMaker/blob/master/Lilygo-7000g/Arduino_Cayenne/Anothermaker-Stripped-LilyGO-SIM7000-Cayenne.ino*/
+
 #define TINY_GSM_DEBUG Serial
 #define CAYENNE_PRINT Serial
 #define TINY_GSM_MODEM_SIM7000
