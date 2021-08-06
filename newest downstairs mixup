@@ -1,0 +1,301 @@
+
+#include <Adafruit_FONA.h> // https://github.com/botletics/SIM7000-LTE-Shield/tree/master/Code
+#include <Adafruit_MQTT.h>
+#include <Adafruit_MQTT_Client.h>
+#include <Adafruit_MQTT_FONA.h>
+#include <WiFiClientSecure.h>
+
+#define SIMCOM_7000            //pinset for a lilygo tcallsim7000 and external gps
+#define FONA_PWRKEY 5
+#define FONA_RST 4
+#define FONA_TX 26 // For GSM
+#define FONA_RX 27 
+#define TXPin 32 // For GPS module 
+#define RXPin 33 
+#define SD_MISO     2
+#define SD_MOSI     15
+#define SD_SCLK     14
+#define SD_CS       13
+#define LED_PIN     12
+#define BAT_ADC     35
+#define SOLAR_ADC   36
+#define GPSBaud   9600
+
+
+uint32_t x=0; //formqqttoconnect
+/*****************************************************MODEM***********************************/
+#include <HardwareSerial.h>
+HardwareSerial fonaSS(1);
+Adafruit_FONA_LTE fona = Adafruit_FONA_LTE();//woo modem marker
+uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout = 0);
+uint8_t type;
+char replybuffer[255]; // this is a large buffer for replies
+char imei[16] = {0}; // MUST use a 16 character buffer for IMEI!
+/************************* WiFi Access Point *********************************
+
+#define WLAN_SSID "ATTn"       //Guest Wifi 
+#define WLAN_PASS "faec" 
+
+
+/************************* Adafruit.io Setup *********************************/
+
+#define AIO_SERVER      "io.adafruit.com"
+
+// Using port 8883 for MQTTS
+#define AIO_SERVERPORT  1883  //1883
+
+// Adafruit IO Account Configuration
+// (to obtain these values, visit https://io.adafruit.com and click on Active Key)
+#define AIO_USERNAME  "namegoeshere"
+#define AIO_KEY       "keygohere"
+
+/************ Global State (you don't need to change this!) ******************/
+// WiFiFlientSecure for SSL/TLS support
+WiFiClientSecure client;
+
+// io.adafruit.com root CA
+const char* adafruitio_root_ca = \
+    "-----BEGIN CERTIFICATE-----\n" \
+    "MIIDrzCCApegAwIBAgIQCDvgVpBCRrGhdWrJWZHHSjANBgkqhkiG9w0BAQUFADBh\n" \
+    "MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3\n" \
+    "d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBD\n" \
+    "QTAeFw0wNjExMTAwMDAwMDBaFw0zMTExMTAwMDAwMDBaMGExCzAJBgNVBAYTAlVT\n" \
+    "MRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdpY2VydC5j\n" \
+    "b20xIDAeBgNVBAMTF0RpZ2lDZXJ0IEdsb2JhbCBSb290IENBMIIBIjANBgkqhkiG\n" \
+    "9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4jvhEXLeqKTTo1eqUKKPC3eQyaKl7hLOllsB\n" \
+    "CSDMAZOnTjC3U/dDxGkAV53ijSLdhwZAAIEJzs4bg7/fzTtxRuLWZscFs3YnFo97\n" \
+    "nh6Vfe63SKMI2tavegw5BmV/Sl0fvBf4q77uKNd0f3p4mVmFaG5cIzJLv07A6Fpt\n" \
+    "43C/dxC//AH2hdmoRBBYMql1GNXRor5H4idq9Joz+EkIYIvUX7Q6hL+hqkpMfT7P\n" \
+    "T19sdl6gSzeRntwi5m3OFBqOasv+zbMUZBfHWymeMr/y7vrTC0LUq7dBMtoM1O/4\n" \
+    "gdW7jVg/tRvoSSiicNoxBN33shbyTApOB6jtSj1etX+jkMOvJwIDAQABo2MwYTAO\n" \
+    "BgNVHQ8BAf8EBAMCAYYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUA95QNVbR\n" \
+    "TLtm8KPiGxvDl7I90VUwHwYDVR0jBBgwFoAUA95QNVbRTLtm8KPiGxvDl7I90VUw\n" \
+    "DQYJKoZIhvcNAQEFBQADggEBAMucN6pIExIK+t1EnE9SsPTfrgT1eXkIoyQY/Esr\n" \
+    "hMAtudXH/vTBH1jLuG2cenTnmCmrEbXjcKChzUyImZOMkXDiqw8cvpOp/2PV5Adg\n" \
+    "06O/nVsJ8dWO41P0jmP6P6fbtGbfYmbW0W5BjfIttep3Sp+dWOIrWcBAI+0tKIJF\n" \
+    "PnlUkiaY4IBIqDfv8NZ5YBberOgOzW6sRBc4L0na4UU+Krk2U886UAb3LujEV0ls\n" \
+    "YSEY1QSteDwsOoBrp+uvFRTp2InBuThs4pFsiv9kuXclVzDAGySj4dzp30d8tbQk\n" \
+    "CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=\n" \
+    "-----END CERTIFICATE-----\n";
+
+/***********************************************************************************************/
+
+// Setup the FONA MQTT class by passing in the FONA class and MQTT server and login details.
+Adafruit_MQTT_FONA mqtt(&fona, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
+
+uint8_t txFailures = 0;                                       // Count of how many publish failures have occured in a row.
+
+Adafruit_MQTT_Publish test1 = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/test");
+
+
+void setup() {
+  Serial.begin(115200);
+  delay(500);
+  startmodem();
+  delay(500);
+  checknet();
+  GPRSon();
+  delay(5000);
+  RootCA();
+  TCPc();
+}
+
+void loop() {
+  Serial.println("triggering mqqt connect");
+  MQTT_connect();
+  pubstuff();
+}
+
+
+void flushSerial() {
+  while (Serial.available())
+    Serial.read();
+}
+
+char readBlocking() {
+  while (!Serial.available());
+  return Serial.read();
+}
+uint16_t readnumber() {
+  uint16_t x = 0;
+  char c;
+  while (! isdigit(c = readBlocking())) {
+    //Serial.print(c);
+  }
+  Serial.print(c);
+  x = c - '0';
+  while (isdigit(c = readBlocking())) {
+    Serial.print(c);
+    x *= 10;
+    x += c - '0';
+  }
+  return x;
+}
+
+uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
+  uint16_t buffidx = 0;
+  boolean timeoutvalid = true;
+  if (timeout == 0) timeoutvalid = false;
+
+  while (true) {
+    if (buffidx > maxbuff) {
+      //Serial.println(F("SPACE"));
+      break;
+    }
+
+    while (Serial.available()) {
+      char c =  Serial.read();
+
+      //Serial.print(c, HEX); Serial.print("#"); Serial.println(c);
+
+      if (c == '\r') continue;
+      if (c == 0xA) {
+        if (buffidx == 0)   // the first 0x0A is ignored
+          continue;
+
+        timeout = 0;         // the second 0x0A is the end of the line
+        timeoutvalid = true;
+        break;
+      }
+      buff[buffidx] = c;
+      buffidx++;
+    }
+
+    if (timeoutvalid && timeout == 0) {
+      //Serial.println(F("TIMEOUT"));
+      break;
+    }
+    delay(1);
+  }
+  buff[buffidx] = 0;  // null term
+  return buffidx;
+}
+
+void startmodem() {
+  
+  pinMode(FONA_RST, OUTPUT);
+  digitalWrite(FONA_RST, HIGH); // Default state
+
+  // Turn on the module by pulsing PWRKEY low for a little bit
+  // This amount of time depends on the specific module that's used
+  fona.powerOn(FONA_PWRKEY); // Power on the module
+
+  // SIM7000 takes about 3s to turn on and SIM7500 takes about 15s
+  // Press reset button if the module is still turning on and the board doesn't find it.
+  // When the module is on it should communicate right after pressing reset
+  
+  // Start at default SIM7000 shield baud rate
+  fonaSS.begin(115200, SERIAL_8N1, FONA_TX, FONA_RX); // baud rate, protocol, ESP32 RX pin, ESP32 TX pin
+
+  Serial.println(F("Configuring to 9600 baud"));
+  fonaSS.println("AT+IPR=9600"); // Set baud rate
+  delay(100); // Short pause to let the command run
+  fonaSS.begin(9600, SERIAL_8N1, FONA_TX, FONA_RX); // Switch to 9600
+  if (! fona.begin(fonaSS)) {
+    Serial.println(F("Couldn't find FONA"));
+    while (1); // Don't proceed if it couldn't find the device
+  }
+
+  type = fona.type();
+  Serial.println(F("FONA is OK"));
+  Serial.print(F("Found "));
+  switch (type) {
+    case SIM800L:
+      Serial.println(F("SIM800L")); break;
+    case SIM800H:
+      Serial.println(F("SIM800H")); break;
+    case SIM808_V1:
+      Serial.println(F("SIM808 (v1)")); break;
+    case SIM808_V2:
+      Serial.println(F("SIM808 (v2)")); break;
+    case SIM5320A:
+      Serial.println(F("SIM5320A (American)")); break;
+    case SIM5320E:
+      Serial.println(F("SIM5320E (European)")); break;
+    case SIM7000:
+      Serial.println(F("SIM7000")); break;
+    case SIM7070:
+      Serial.println(F("SIM7070")); break;
+    case SIM7500:
+      Serial.println(F("SIM7500")); break;
+    case SIM7600:
+      Serial.println(F("SIM7600")); break;
+    default:
+      Serial.println(F("???")); break;
+  }
+
+  // Print module IMEI number.
+  uint8_t imeiLen = fona.getIMEI(imei);
+  if (imeiLen > 0) {
+    Serial.print("Module IMEI: "); Serial.println(imei);
+  }
+
+  // Set modem to full functionality
+  fona.setFunctionality(1); // AT+CFUN=1
+  fona.setNetworkSettings(F("vzwinternet"), F(""), F(""));
+  fona.setOperatingBand("CAT-M", 13);
+}
+
+void MQTT_connect() {
+  int8_t ret;
+
+  Serial.print("Connecting to MQTT... ");
+
+  while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
+    Serial.println(mqtt.connectErrorString(ret));
+    Serial.println("Retrying MQTT connection in 5 seconds...");
+    delay(5000);  // wait 5 seconds
+  }
+  Serial.println("MQTT Connected!");
+}
+
+void pubstuff() {
+  // Now we can publish stuff!
+  Serial.print(F("\nSending val "));
+  Serial.print(x);
+  Serial.print(F(" to test feed..."));
+  if (! test1.publish(x++)) {
+    Serial.println(F("Failed"));
+  } else {
+    Serial.println(F("OK!"));
+  }
+
+  // wait a couple seconds to avoid rate limit
+  delay(2000);
+}
+
+void checknet() {
+  // read the network/cellular status
+        uint8_t n = fona.getNetworkStatus();
+        Serial.print(F("Network status "));
+        Serial.print(n);
+        Serial.print(F(": "));
+        if (n < 5) Serial.println(F("Not registered"));{
+            Serial.println("start again");
+            delay(2000);
+            startmodem();
+        }
+        if (n == 5) Serial.println(F("Registered roaming"));{
+          return;
+        }
+}
+
+void GPRSon(){
+  // turn GPRS on
+  if (!fona.enableGPRS(true)){
+   Serial.println(F("Failed to turn on"));
+   delay(2000);
+   GPRSon();
+  }
+}
+void RootCA() {
+  fona.addRootCA(adafruitio_root_ca);
+  Serial.println("sert is on");
+}
+void TCPc() {
+  char sendcmd[50];
+  sprintf(sendcmd, "AT+CIPOPEN=0,\"TCP\",\"%s\",%u", AIO_SERVER, AIO_SERVERPORT);
+  fonaSS.print(sendcmd);
+  Serial.println("TCP?");
+delay(5000);
+}
