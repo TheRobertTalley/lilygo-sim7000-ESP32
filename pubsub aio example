@@ -1,0 +1,5 @@
+#define WLAN_SSID       "... your WiFi SSID..."
+#define WLAN_PASS       "... your WiFi password..."
+#define ADAFRUIT_USERNAME  "... your Adafruit username (see accounts.adafruit.com)..."
+#define AIO_KEY  "... your Adafruit IO key..."
+#define FEED_PATH ADAFRUIT_USERNAME "/feeds/feed-name/"
